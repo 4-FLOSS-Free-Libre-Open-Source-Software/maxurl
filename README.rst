@@ -4,19 +4,19 @@
      <img src="https://raw.githubusercontent.com/qsniyg/maxurl/master/resources/imu_opera_banner_transparent.png" alt="Image Max URL" title="Image Max URL" />
    </p>
 
-Image Max URL is a program that will try to find larger/original versions of images, usually by replacing URL patterns.
+Image Max URL is a program that will try to find larger/original versions of images and videos, usually by replacing URL patterns.
 
-It currently contains support for >6000 hardcoded websites (full list in `sites.txt <https://github.com/qsniyg/maxurl/blob/master/sites.txt>`__),
+It currently contains support for >8000 hardcoded websites (full list in `sites.txt <https://github.com/qsniyg/maxurl/blob/master/sites.txt>`__),
 but it also supports a number of generic engines (such as Wordpress and MediaWiki), which means it can work for many other websites as well.
 
 It is currently released as:
 
-- Userscript: `Greasyfork <https://greasyfork.org/en/scripts/36662-image-max-url>`__ | `OpenUserJS <https://openuserjs.org/scripts/qsniyg/Image_Max_URL>`__ (most browsers)
+- Userscript: `Greasyfork <https://greasyfork.org/scripts/36662-image-max-url>`__ | `OpenUserJS <https://openuserjs.org/scripts/qsniyg/Image_Max_URL>`__ (most browsers)
 
   - `userscript.user.js <https://github.com/qsniyg/maxurl/blob/master/userscript.user.js>`__ is also the base for everything listed below
   - It also serves as a node module (used by the reddit bot), and can be embedded in a website
 
-- Browser extension: `Firefox Quantum <https://addons.mozilla.org/en-US/firefox/addon/image-max-url/>`__ | `Opera <https://addons.opera.com/en/extensions/details/image-max-url/>`__ (other browsers supporting WebExtensions can sideload the extension through this git repository)
+- Browser extension: `Firefox Quantum <https://addons.mozilla.org/firefox/addon/image-max-url/>`__ | `Opera Beta/Developer <https://addons.opera.com/en/extensions/details/image-max-url/>`__ (other browsers supporting WebExtensions can sideload the extension through this git repository)
 
   - Since addons have more privileges than userscripts, it has a bit of extra functionality over the userscript
   - Source code is in `manifest.json <https://github.com/qsniyg/maxurl/blob/master/manifest.json>`__ and the `extension <https://github.com/qsniyg/maxurl/tree/master/extension>`__ folder
@@ -34,6 +34,8 @@ Community:
 
 - `Discord Server <https://discord.gg/fH9Pf54>`__
 
+- `Matrix <https://matrix.to/#/#image-max-url:tedomum.net?via=tedomum.net>`__ (``#image-max-url:tedomum.net``)
+
 - `Subreddit <http://reddit.com/r/MaxImage>`__
 
 *************************
@@ -41,14 +43,40 @@ Sideloading the extension
 *************************
 
 The extension is currently unavailable to other browsers' addon stores (such as Chrome and Microsoft Edge),
-but you can sideload this repository if you wish to use the extension instead of the userscript.
+but you can sideload this repository if you wish to use the extension version instead of the userscript.
 
-- Download the repository however you wish (I'd recommend cloning it through git as it allows easier updating)
+- Repository:
 
-- Go to chrome://extensions, make sure "Developer mode" is enabled, click "Load unpacked [extension]", and navigate to the maxurl repository
+  - Download the repository however you wish (I'd recommend cloning it through git as it allows easier updating)
+  - Chromium:
 
-You'll probably want to keep "Check for updates" enabled (it's enabled by default) as sideloaded extensions aren't automatically updated.
-Any new updates will be displayed at the top of the options page.
+    - Go to chrome://extensions, make sure "Developer mode" is enabled, click "Load unpacked [extension]", and navigate to the maxurl repository
+
+  - Firefox:
+
+    - Go to about:debugging->This Firefox, select "Load temporary Add-on...", and navigate to "manifest.json" within the maxurl repository
+    - Note that the addon will be deleted once Firefox is closed. There's unfortunately nothing I can do about this.
+
+- CRX (Chromium-based browsers):
+
+  - Download the CRX build from https://github.com/qsniyg/maxurl/blob/master/build/ImageMaxURL_crx3.crx
+  - Go to chrome://extensions, make sure "Developer mode" is enabled, then drag&drop the downloaded CRX file onto the page.
+
+- XPI (Firefox-based browsers):
+
+  - Download the XPI build from https://github.com/qsniyg/maxurl/blob/master/build/ImageMaxURL_signed.xpi
+  - Go to about:addons, click on the gear icon, then select "Install Add-on from From File...", and navigate to the downloaded XPI file.
+
+************
+Contributing
+************
+
+Any contribution is greatly appreciated! If you have any bug reports, feature requests, or new websites you want supported, please file an issue here.
+
+If you don't have a Github account, feel free to either use one of the community links above or `contact me directly <https://qsniyg.github.io/>`__.
+
+If you wish to contribute to the repository itself (code contributions, translations, etc.), please check `CONTRIBUTING.md <https://github.com/qsniyg/maxurl/blob/master/CONTRIBUTING.md>`__
+for more information.
 
 *******************************
 Integrating IMU in your program
@@ -107,7 +135,7 @@ As mentioned above, userscript.user.js also functions as a node module.
 
       // Helper function to perform HTTP requests, used for sites like Flickr
       //  The API is expected to be like GM_xmlHTTPRequest's API.
-      // An implementation using node's request module can be found in bot.js
+      // An implementation using node's request module can be found in reddit-bot/dourl.js
       do_request: function(options) {
         // options = {
         //   url: "",
@@ -237,20 +265,3 @@ The result is a list of objects that contain properties that may be useful in us
         possibly_broken: false
       }
     }]
-
-************
-Contributing
-************
-
-Contributions are always greatly appreciated! If you have any bug reports, feature requests, or new websites you want supported,
-please file an issue here.
-
-Translations
-============
-
-Currently translations are stored inside the source code (userscript.user.js). I'm planning to move this into a separate
-file in order to make this easier for translators, but for now:
-
-* All message strings are stored as a JS object as ``strings`` (search for ``var strings =`` in the source code, it's near the top)
-* Each translated language is specified under a message ID.
-* Language subtags are currently ignored. For example, "en" is used instead of "en-US".

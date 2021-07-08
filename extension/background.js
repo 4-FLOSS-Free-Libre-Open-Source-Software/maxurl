@@ -2,6 +2,14 @@
 // https://github.com/violentmonkey/violentmonkey/blob/9e672d5590aea144840681b6f2ce0c267d57fc13/src/background/utils/requests.js
 // https://github.com/violentmonkey/violentmonkey/blob/9e672d5590aea144840681b6f2ce0c267d57fc13/src/common/index.js
 
+var background_tab = null;
+chrome.tabs.query({ currentWindow: true, active: true }, function(tabs) {
+	background_tab = tabs[0];
+});
+
+// Used to control which codepath to use (true for AMO), but this may not be needed
+const amo_build = false;
+
 var requests = {};
 var redirects = {};
 var loading_urls = {};
@@ -11,6 +19,7 @@ var request_headers = {};
 var override_headers = {};
 var override_download = {};
 var reqid_to_redid = {};
+var notifications = {};
 
 var ready_functions = [];
 var on_ready = function(f) {
@@ -22,6 +31,15 @@ var run_ready = function() {
 		f();
 	});
 };
+
+var handle_error = function(context) {
+	var last_error = chrome.runtime.lastError;
+	if (last_error) {
+		console.error(JSON.stringify(last_error), context);
+	}
+}
+
+var background_userscript_tabid = "::IMU::background_userscript";
 
 var storage = null;
 
@@ -49,6 +67,8 @@ if (!storage) {
 	set_storage_to_local();
 }
 
+var is_firefox = navigator.userAgent.indexOf("Firefox") >= 0;
+
 var nir_debug = false;
 var debug = function() {
 	if (nir_debug) {
@@ -65,6 +85,14 @@ var get_random_id = function(obj) {
 	}
 
 	return id;
+};
+
+var header_nonce = get_random_id();
+//var header_url_regex = new RegExp("^https?:\/\/[^/]+\/+#IMU-" + header_nonce + "-(.*)");
+
+var get_imu_header_name = function(header_name, type) {
+	if (!type) type = "H";
+	return "X-IMU-" + header_nonce + "-" + type + "-" + header_name;
 };
 
 var parse_headers = function(headerstr) {
@@ -115,6 +143,31 @@ var same_cookie_domain = function(url1, url2) {
 	return get_domain(url1) === get_domain(url2);
 };
 
+var use_header = function(value) {
+	return value !== "" && value !== null;
+};
+
+var is_override_relevant = function(override, details) {
+	return override.url === details.url && override.method === details.method;
+};
+
+var get_overrides = function(details) {
+	var overrides = [];
+
+	if (!(details.tabId in override_headers)) return overrides;
+
+	for (const override of override_headers[details.tabId]) {
+		if (is_override_relevant(override, details)) {
+			overrides.push(override);
+		}
+	}
+
+	return overrides;
+};
+
+// currently used to detect if the extension is unloaded
+chrome.runtime.onConnect.addListener(function() {});
+
 var do_request = function(request, sender) {
 	debug("do_request", request, sender);
 
@@ -125,10 +178,16 @@ var do_request = function(request, sender) {
 	xhr.open(method, request.url, true);
 
 	if (request.responseType) {
-		if (request.responseType === "arraybuffer")
+		if (request.responseType === "arraybuffer") {
 			request.responseType = "blob";
+			request.wanted_responseType = "arraybuffer";
+		}
 
 		xhr.responseType = request.responseType;
+	}
+
+	if (request.timeout) {
+		xhr.timeout = request.timeout;
 	}
 
 	var headers = request.headers || {};
@@ -136,12 +195,18 @@ var do_request = function(request, sender) {
 	for (var header in headers) {
 		if (header.toLowerCase() == "cookie")
 			cookie_overridden = true;
-		xhr.setRequestHeader("IMU--" + header, headers[header]);
+
+		var value = headers[header];
+		if (use_header(value)) {
+			xhr.setRequestHeader(get_imu_header_name(header), headers[header]);
+		} else {
+			xhr.setRequestHeader(get_imu_header_name(header, "D"), "true");
+		}
 	}
 
-	xhr.setRequestHeader("IMU-Verify", id);
+	//xhr.setRequestHeader("IMU-Verify", id);
 
-	var do_final = function(override, final, cb) {
+	var do_final = function(event, final, cb) {
 		var server_headers = null;
 		if (requests[id].server_headers) {
 			server_headers = requests[id].server_headers;
@@ -159,9 +224,13 @@ var do_request = function(request, sender) {
 			responseType: xhr.responseType,
 			status: xhr.status, // file:// returns 0, tracking protection also returns 0
 			realStatus: xhr.status,
-			statusText: xhr.statusText
-		};
+			statusText: xhr.statusText,
 
+			// progress
+			lengthComputable: event.lengthComputable,
+			loaded: event.loaded,
+			total: event.total
+		};
 
 		if (server_headers) {
 			var parsed_responseheaders = parse_headers(resp.responseHeaders);
@@ -194,6 +263,9 @@ var do_request = function(request, sender) {
 			}
 
 			if (resp.responseType === "blob") {
+				if (request.wanted_responseType)
+					resp._wanted_responseType = request.wanted_responseType;
+
 				var body = xhr.response;
 				if (!body) {
 					resp.status = xhr.status;
@@ -201,24 +273,43 @@ var do_request = function(request, sender) {
 					return;
 				}
 
-				var reader = new FileReader();
-				reader.onload = function() {
-					var array = new Uint8Array(reader.result);
-					var value = '';
-					for (let i = 0; i < array.length; i += 1) {
-						value += String.fromCharCode(array[i]);
-					}
+				var use_blob_url = true;
 
+				// firefox doesn't support sending blob urls to different context IDs
+				// fixme: is there a way to find our contextId? querying our background tab doesn't show this info as it's only available under MessageSender.
+				if (is_firefox && background_tab && sender.tab.cookieStoreId !== background_tab.cookieStoreId)
+					use_blob_url = false;
+
+				if (!use_blob_url) {
+					var reader = new FileReader();
+					reader.onload = function() {
+						var array = new Uint8Array(reader.result);
+						var value = '';
+						for (let i = 0; i < array.length; i += 1) {
+							value += String.fromCharCode(array[i]);
+						}
+
+						resp._responseEncoded = {
+							value,
+							type: body.type,
+							name: body.name,
+							lastModified: body.lastModified
+						};
+
+						endcb(resp);
+					};
+					reader.readAsArrayBuffer(body);
+				} else {
+					var objurl = URL.createObjectURL(body);
 					resp._responseEncoded = {
-						value,
+						objurl: objurl,
 						type: body.type,
 						name: body.name,
 						lastModified: body.lastModified
 					};
 
 					endcb(resp);
-				};
-				reader.readAsArrayBuffer(body);
+				}
 			} else {
 				endcb(resp);
 			}
@@ -228,15 +319,22 @@ var do_request = function(request, sender) {
 	};
 
 	var add_handler = function(event, final, empty) {
-		xhr[event] = function() {
+		xhr[event] = function(e) {
 			debug("XHR event: ", event);
 
+			var obj = {
+				tabid: sender.tab.id,
+				event: event,
+				final: final,
+				reqid: id
+			};
+
 			if (empty) {
-				return request[event](null);
+				return xhr_final_handler(null, obj);
 			}
 
-			do_final({}, final, function(resp) {
-				request[event](resp);
+			do_final(e, final, function(resp) {
+				xhr_final_handler(resp, obj);
 			});
 		};
 	};
@@ -245,6 +343,7 @@ var do_request = function(request, sender) {
 	add_handler("onerror", true);
 	add_handler("onprogress", false);
 	add_handler("onabort", true, true);
+	add_handler("ontimeout", true);
 
 	requests[id] = {
 		id: id,
@@ -252,21 +351,62 @@ var do_request = function(request, sender) {
 		url: request.url
 	};
 
+	var send_request = function() {
+		try {
+			xhr.send(request.data);
+		} catch (e) {
+			console.error(e);
+			xhr.abort();
+		}
+	};
+
 	if (!cookie_overridden) {
-		get_cookies(request.url, function(cookies) {
+		var cookies_options = {};
+
+		// doesn't exist for background userscript
+		if (sender.tab.id) cookies_options.tabid = sender.tab.id;
+		if (sender.tab.cookieStoreId) cookies_options.store = sender.tab.cookieStoreId;
+
+		var cookie_url = request.cookie_url || request.url;
+
+		get_cookies(cookie_url, function(cookies) {
 			if (cookies !== null) {
-				xhr.setRequestHeader("IMU--Cookie", create_cookieheader(cookies));
+				xhr.setRequestHeader(get_imu_header_name("Cookie"), create_cookieheader(cookies));
 				requests[id].cookies_added = true;
 			}
 
-			xhr.send(request.data);
-		}, { tabid: sender.tab.id, store: sender.tab.cookieStoreId });
+			send_request();
+		}, cookies_options);
 	} else {
-		xhr.send(request.data);
+		send_request();
 	}
 
 	return id;
 };
+
+// failed experiment to try to run requests in the page
+if (false) {
+	var onBeforeRequest_listener = function(details) {
+		console.log("onBeforeRequest", details);
+
+		var header_url_match = details.url.match(header_url_regex);
+		if (header_url_match) {
+			return {
+				redirectUrl: decodeURIComponent(header_url_match[1])
+			};
+		}
+
+		return {};
+	};
+	chrome.webRequest.onBeforeRequest.addListener(
+		onBeforeRequest_listener,
+		{
+			urls: ['<all_urls>'],
+			types: ['xmlhttprequest']
+		},
+		['blocking', 'requestBody']
+	);
+}
 
 // Modify request headers if needed
 var onBeforeSendHeaders_listener = function(details) {
@@ -275,19 +415,17 @@ var onBeforeSendHeaders_listener = function(details) {
 	var headers = details.requestHeaders;
 	var new_headers = [];
 	var imu_headers = [];
-	var verify_ok = false;
+	var remove_headers = [];
 	var request_id;
 
 	if (details.tabId in redirects) {
-		verify_ok = true;
-
 		var redirect = redirects[details.tabId];
-		delete redirects[details.tabId];
+		//delete redirects[details.tabId];
 
 		if (!(redirect instanceof Array))
 			redirect = [redirect];
 
-		debug("Redirect", details.tabId);
+		debug("Redirect", details.tabId, redirect);
 
 		loading_urls[details.tabId] = details.url;
 
@@ -305,12 +443,12 @@ var onBeforeSendHeaders_listener = function(details) {
 		}
 
 		if (!rheaders) {
-			return;
+			//return;
 		}
 
 		for (var header in rheaders) {
 			headers.push({
-				name: "IMU--" + header,
+				name: get_imu_header_name(header),
 				value: rheaders[header]
 			});
 		}
@@ -318,20 +456,24 @@ var onBeforeSendHeaders_listener = function(details) {
 
 	debug("Headers", headers);
 
-	headers.forEach((header) => {
-		if (header.name.startsWith("IMU--")) {
+	headers.forEach(function(header) {
+		if (!header.name.startsWith("X-IMU-" + header_nonce + "-")) {
+			new_headers.push(header);
+			return;
+		}
+
+		var simple_name = header.name.slice(("X-IMU-" + header_nonce + "-").length);
+		var wanted_header_name = simple_name.slice(2);
+
+		if (simple_name.startsWith("H-")) {
 			imu_headers.push({
-				name: header.name.slice(5),
+				name: wanted_header_name,
 				value: header.value
 			});
-		} else if (header.name === "IMU-Verify") {
-			verify_ok = header.value in requests;
-			if (verify_ok)
-				request_id = header.value;
-
-			reqid_to_redid[details.requestId] = header.value;
+		} else if (simple_name.startsWith("D-")) {
+			remove_headers.push(wanted_header_name.toLowerCase());
 		} else {
-			new_headers.push(header);
+			console.error("Unknown header", header);
 		}
 	});
 
@@ -339,20 +481,17 @@ var onBeforeSendHeaders_listener = function(details) {
 		// This is useful for redirects, which strip IMU headers
 		if (details.requestId in request_headers) {
 			imu_headers = JSON.parse(JSON.stringify(request_headers[details.requestId]));
-			verify_ok = true;
 		} else if (details.tabId in override_headers) {
-			for (const override of override_headers[details.tabId]) {
-				if (override.url === details.url && override.method === details.method) {
-					imu_headers = [];
-					for (var header in override.headers) {
-						imu_headers.push({
-							name: header,
-							value: override.headers[header]
-						});
-					}
+			var overrides = get_overrides(details);
+			if (overrides.length > 0) {
+				var override = overrides[0];
 
-					verify_ok = true;
-					break;
+				imu_headers = [];
+				for (var header in override.headers) {
+					imu_headers.push({
+						name: header,
+						value: override.headers[header]
+					});
 				}
 			}
 		}
@@ -367,33 +506,43 @@ var onBeforeSendHeaders_listener = function(details) {
 		}
 	}
 
-	if (!verify_ok) {
-		return;
-	}
+	// no need to do anything
+	if (!imu_headers.length && !remove_headers.length) return;
 
 	if (imu_headers.length > 0) {
 		request_headers[details.requestId] = imu_headers;
 	}
 
-	var use_header = function(value) {
-		return value !== "" && value !== null;
-	};
+	for (const remove of remove_headers) {
+		for (var i = 0; i < new_headers.length; i++) {
+			if (new_headers[i].name.toLowerCase() === remove) {
+				new_headers.splice(i, 1);
+				break;
+			}
+		}
+	}
 
 	for (var i = 0; i < imu_headers.length; i++) {
+		var use_this = use_header(imu_headers[i].value);
+		if (use_this)
+			imu_headers[i].value = imu_headers[i].value.toString(); // e.g. for numbers
+
 		var found = false;
 		for (var j = 0; j < new_headers.length; j++) {
 			if (new_headers[j].name === imu_headers[i].name) {
-				if (use_header(imu_headers[i].value))
+
+				if (use_this) {
 					new_headers[j] = imu_headers[i];
-				else
+				} else {
 					new_headers.splice(j, 1);
+				}
 
 				found = true;
 				break;
 			}
 		}
 
-		if (!found && use_header(imu_headers[i].value))
+		if (!found && use_this)
 			new_headers.push(imu_headers[i]);
 	}
 
@@ -406,7 +555,7 @@ var onBeforeSendHeaders_listener = function(details) {
 
 var onBeforeSendHeaders_filter = {
 	urls: ['<all_urls>'],
-	types: ['xmlhttprequest', 'main_frame', 'sub_frame', 'image']
+	types: ['xmlhttprequest', 'main_frame', 'sub_frame', 'image', 'media']
 };
 
 try {
@@ -693,18 +842,68 @@ var onHeadersReceived = function(details) {
 		return {
 			responseHeaders: newheaders
 		};
+	} else if (!details.documentUrl && details.type === "main_frame") {
+		// new document replacing page
+		if (typeof imu_userscript_message_sender === "function") {
+			imu_userscript_message_sender({
+				type: "bg_redirect",
+				data: details
+			});
+		}
+	} else {
+		// crossorigin=anonymous requests (e.g. ttloader from tiktok) can fail to load without Access-Control-Allow-Origin
+		var overrides = get_overrides(details);
+		if (overrides.length && (overrides[0].anonymous || overrides[0].content_type)) {
+			var override_hdrs = [];
+
+			if (overrides[0].anonymous) {
+				override_hdrs.push({
+					name: "Access-Control-Allow-Origin",
+					value: "*"
+				});
+			}
+
+			if (overrides[0].content_type) {
+				override_hdrs.push({
+					name: "Content-Type",
+					value: overrides[0].content_type
+				});
+			}
+
+			var newheaders = [];
+			details.responseHeaders.forEach(function(header) {
+				for (const hdr of override_hdrs) {
+					if (header.name.toLowerCase() === hdr.name.toLowerCase())
+						return;
+				}
+
+				newheaders.push(header);
+			});
+
+			[].push.apply(newheaders, override_hdrs);
+
+			//debug(details);
+			debug("Overrides", overrides[0]);
+			debug("Old headers", details.responseHeaders);
+			debug("New headers", newheaders);
+
+			return {
+				responseHeaders: newheaders
+			};
+		}
 	}
 };
 
+var received_types = ['xmlhttprequest', 'main_frame', 'sub_frame', 'image', 'media'];
 try {
 	chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, {
 		urls: ['<all_urls>'],
-		types: ['xmlhttprequest', 'main_frame', 'sub_frame']
+		types: received_types
 	}, ['blocking', 'responseHeaders', 'extraHeaders']);
 } catch (e) {
 	chrome.webRequest.onHeadersReceived.addListener(onHeadersReceived, {
 		urls: ['<all_urls>'],
-		types: ['xmlhttprequest', 'main_frame', 'sub_frame']
+		types: received_types
 	}, ['blocking', 'responseHeaders']);
 }
 
@@ -725,7 +924,7 @@ chrome.webRequest.onResponseStarted.addListener(function(details) {
 		var new_override = [];
 		var removed = false;
 		for (const override of override_headers[details.tabId]) {
-			if (removed || override.url !== details.url || override.method !== details.method) {
+			if (removed || !is_override_relevant(override, details)) {
 				new_override.push(override);
 			} else {
 				removed = true;
@@ -753,7 +952,8 @@ function get_cookies(url, cb, options) {
 	if (!options) options = {};
 
 	var end = function (store) {
-		var base_options = { url: url, storeId: store };
+		var base_options = { url: url };
+		if (store) base_options.storeId = store;
 
 		var new_options = JSON.parse(JSON.stringify(base_options));
 		new_options.firstPartyDomain = null;
@@ -775,13 +975,16 @@ function get_cookies(url, cb, options) {
 		}
 	};
 
-	if (options.tabid && !options.store) {
+	if (!options.store) {
+		var tabid = options.tabid;
+		if (tabid === background_userscript_tabid) tabid = null;
+
 		// TODO: cache
 		try {
 			chrome.cookies.getAllCookieStores(function (stores) {
 				var store = null;
 				for (var i = 0; i < stores.length; i++) {
-					if (stores[i].tabIds.indexOf(options.tabid) >= 0) {
+					if ((tabid && stores[i].tabIds.indexOf(tabid) >= 0) || !tabid) {
 						store = stores[i].id;
 						break;
 					}
@@ -802,31 +1005,102 @@ function get_cookies(url, cb, options) {
 	}
 }
 
+var xhr_final_handler = function(_data, obj) {
+	var message_data = {
+		type: "request",
+		data: {
+			event: obj.event,
+			final: obj.final,
+			id: obj.reqid,
+			data: _data
+		}
+	};
+
+	if (obj.tabid !== background_userscript_tabid) {
+		chrome.tabs.sendMessage(obj.tabid, message_data);
+	} else {
+		imu_userscript_message_sender(message_data);
+	}
+};
+
+var download_with_tabs = function(tab_options, imu, filename, respond) {
+	chrome.tabs.create(tab_options, function (tab) {
+		debug("newTab (download)", tab);
+		redirects[tab.id] = imu;
+
+		override_download[tab.id] = {
+			filename: filename
+		};
+
+		respond({
+			type: "download"
+		});
+	});
+};
+
+var fetch_lib_file = function(filename) {
+	var xhr = new XMLHttpRequest();
+	xhr.open("GET", chrome.runtime.getURL("/lib/" + filename), true);
+
+	return new Promise((resolve, reject) => {
+		xhr.onload = function() {
+			if (xhr.readyState !== 4)
+				return;
+
+			if (xhr.status !== 200 && xhr.status !== 0)
+				return resolve(null);
+
+			return resolve(xhr.responseText);
+		};
+
+		xhr.onerror = function() {
+			return resolve(null);
+		};
+
+		xhr.send();
+	});
+};
+
+var amo_lib_map = {
+	testcookie_slowaes: "slowaes",
+	"shaka.debug": "shaka",
+	cryptojs_aes: "cryptojs_aes",
+	stream_parser: null,
+	ffmpeg: null,
+	jszip: "jszip"
+};
+
+var lib_cache = {};
+var fetch_lib = async function(libname) {
+	if (libname in lib_cache)
+		return lib_cache[libname];
+
+	if (amo_build) {
+		var amo_libname = amo_lib_map[libname];
+		if (!amo_libname) {
+			console.error("Invalid library for AMO build", libname);
+			return null;
+		}
+
+		var patched = await patch_lib(amo_libname, function(lib) {
+			return fetch_lib_file("orig/" + lib);
+		});
+
+		lib_cache[libname] = patched;
+		return patched;
+	} else {
+		return await fetch_lib_file(libname + ".js");
+	}
+};
+
 // Message handler
-chrome.runtime.onMessage.addListener((message, sender, respond) => {
-	debug("onMessage", message, sender, respond);
+var extension_message_handler = (message, sender, respond) => {
+	if (message && message.type !== "getvalue") {
+		debug("onMessage", message, sender, respond);
+	}
 
 	if (message.type === "request") {
 		var reqid;
-
-		var add_handler = function(name, final) {
-			message.data[name] = function(data) {
-				chrome.tabs.sendMessage(sender.tab.id, {
-					type: "request",
-					data: {
-						event: name,
-						final: final,
-						id: reqid,
-						data: data
-					}
-				});
-			};
-		};
-
-		add_handler("onload", true);
-		add_handler("onerror", true);
-		add_handler("onprogress", false);
-		add_handler("onabort", true);
 
 		reqid = do_request(message.data, sender);
 		respond({
@@ -842,8 +1116,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 		}
 
 		requests[message.data].xhr.abort();
+	} else if (message.type === "get_request_nonce") {
+		respond({
+			type: "request_nonce",
+			data: header_nonce
+		});
+
+		return true;
 	} else if (message.type === "redirect") {
-		redirects[sender.tab.id] = message.data;
+		var tabid = message.data.tabId || sender.tab.id;
+		redirects[tabid] = message.data.obj;
 	} else if (message.type === "newtab") {
 		var tab_options = {
 			url: message.data.imu.url,
@@ -906,35 +1188,16 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 	} else if (message.type === "get_lib") {
 		debug("get_lib", message);
 
-		var xhr = new XMLHttpRequest();
-		xhr.open("GET", chrome.runtime.getURL("/lib/" + message.data.name + ".js"), true);
-
-		xhr.onload = function() {
-			if (xhr.readyState !== 4)
-				return;
-
-			if (xhr.status !== 200 && xhr.status !== 0)
-				return respond({
-					type: "get_lib",
-					data: null
-				});
-
+		(async function() {
+			var lib = await fetch_lib(message.data.name);
 			respond({
 				type: "get_lib",
 				data: {
-					text: xhr.responseText
+					text: lib
 				}
 			});
-		};
+		})();
 
-		xhr.onerror = function(result) {
-			respond({
-				type: "get_lib",
-				data: null
-			});
-		};
-
-		xhr.send();
 		return true;
 	} else if (message.type === "override_next_headers") {
 		debug("override_next_headers", message);
@@ -945,7 +1208,9 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 		override_headers[sender.tab.id].push({
 			url: message.data.url,
 			method: message.data.method,
-			headers: message.data.headers
+			headers: message.data.headers,
+			anonymous: !!message.data.anonymous,
+			content_type: message.data.content_type || null
 		});
 
 		// In order to prevent races
@@ -964,30 +1229,70 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 			active: false
 		};
 
-		chrome.tabs.create(tab_options, function (tab) {
-			debug("newTab (download)", tab);
-			redirects[tab.id] = message.data.imu;
+		var do_download_with_tabs = function() {
+			download_with_tabs(tab_options, message.data.imu, message.data.filename, respond);
+		}
 
-			override_download[tab.id] = {
-				filename: message.data.imu.filename
-			};
+		if (!message.data.force_saveas) {
+			do_download_with_tabs();
+		} else {
+			try {
+				var download_headers = [];
+				if (message.data.imu.headers) {
+					for (const header in message.data.imu.headers) {
+						const header_obj = {name: header, value: message.data.imu.headers[header] || ""};
+						download_headers.push(header_obj);
+					}
+				}
 
-			respond({
-				type: "download"
-			});
-		});
+				chrome.downloads.download({
+					url: message.data.imu.url,
+					headers: download_headers,
+					filename: message.data.filename,
+					saveAs: true
+				}, function(id) {
+					var do_with_tabs = false;
+
+					if (chrome.runtime.lastError) {
+						console.error(chrome.runtime.lastError.message);
+
+						// under Chrome:  Unsafe request header name
+						// under Firefox: Forbidden request header name
+						if (chrome.runtime.lastError.message.indexOf("request header name") >= 0) {
+							do_with_tabs = true;
+						}
+
+						// under Firefox, cancelling the download will result in: Download canceled by the user
+						// therefore, we must check the lastError's message instead of just 'id === "undefined"', as it also returns an undefined id for that too.
+					}
+
+					if (typeof id === "undefined" && do_with_tabs) {
+						return do_download_with_tabs();
+					}
+				});
+
+				if (chrome.runtime.lastError) {
+					console.log(chrome.runtime.lastError);
+				}
+			} catch (e) {
+				console.error(e);
+
+				// fall back to non-downloads if we don't have the permission
+				do_download_with_tabs();
+			}
+		}
 
 		return true;
 	} else if (message.type === "remote" || message.type === "remote_reply") {
 		debug(message.type, message);
 
 		chrome.tabs.sendMessage(sender.tab.id, message);
-	} else if (message.type === "permission") {
+	} else if (message.type === "permission" && false) { // This is unused!
 		debug("permission", message);
 
-		if (message.data.permission === "history") {
+		if (["history", "notifications"].indexOf(message.data.permission) >= 0) {
 			chrome.permissions.request({
-				permissions: ["history"]
+				permissions: [message.data.permission]
 			}, function(granted) {
 				respond({
 					type: "permission",
@@ -996,6 +1301,10 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 						granted: granted
 					}
 				});
+
+				if (granted && message.data.permission === "notifications") {
+					create_notification_handlers();
+				}
 			});
 		} else {
 			respond({
@@ -1008,6 +1317,12 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 		}
 
 		return true;
+	} else if (message.type === "permission_handler") {
+		debug("permission_handler", message);
+
+		if (message.data.permission === "notifications") {
+			create_notification_handlers();
+		}
 	} else if (message.type === "add_to_history") {
 		debug("add_to_history", message);
 
@@ -1018,8 +1333,91 @@ chrome.runtime.onMessage.addListener((message, sender, respond) => {
 		} catch (e) {
 			console.error(e);
 		}
+	} else if (message.type === "notification") {
+		debug("notification", message);
+
+		try {
+			var notif_id = get_random_id(notifications);
+			chrome.notifications.create(notif_id, {
+				type: "basic",
+				iconUrl: message.data.image || chrome.extension.getURL("/resources/logo_96.png"),
+				title: message.data.title || "Image Max URL",
+				message: message.data.text
+			}, function(notif_id) {
+				notifications[notif_id] = function(action) {
+					// FIXME: since this is a response, only one of clicked/closed can be sent
+					respond({
+						type: "notification",
+						data: {
+							status: "success",
+							action: action
+						}
+					});
+				};
+			});
+
+			// closing won't return
+			if (!message.data.onclick)
+				return;
+		} catch (e) {
+			console.error(e);
+
+			respond({
+				type: "notification",
+				data: {
+					status: "noperm"
+				}
+			});
+		}
+
+		return true;
 	}
-});
+};
+
+var notification_handler = function(notif_id, action, byuser) {
+	debug("notification_handler", notif_id, action, byuser);
+
+	if (!(notif_id in notifications)) {
+		console.error(notif_id, "not in notifications");
+		return;
+	}
+
+	if (action === "clicked") {
+		notifications[notif_id](action);
+	}
+
+	delete notifications[notif_id];
+};
+
+var added_notification_handlers = false;
+var create_notification_handlers = function() {
+	try {
+		chrome.notifications.onClicked.addListener(function(notif_id) {
+			notification_handler(notif_id, "clicked");
+		});
+
+		chrome.notifications.onClosed.addListener(function(notif_id, byuser) {
+			notification_handler(notif_id, "closed", byuser);
+		});
+	} catch (e) {
+		console.warn("Notifications not allowed");
+	}
+};
+create_notification_handlers();
+
+chrome.runtime.onMessage.addListener(extension_message_handler);
+
+var userscript_extension_message_handler = function(message, respond) {
+	if (!respond) {
+		respond = function(){};
+	}
+
+	if (!extension_message_handler(message, {tab: {id: background_userscript_tabid}}, respond)) {
+		respond();
+	}
+};
+
+var imu_userscript_message_sender = null;
 
 function contextmenu_imu(data, tab) {
 	debug("contextMenu", data);
@@ -1035,7 +1433,7 @@ function create_contextmenu() {
 
 	contextmenu = chrome.contextMenus.create({
 		title: "Try to find larger image (IMU)",
-		contexts: ["page", "link", "image"],
+		contexts: ["page", "link", "image", "video", "audio"],
 		onclick: contextmenu_imu
 	});
 }
@@ -1110,24 +1508,28 @@ chrome.storage.onChanged.addListener(function(changes, namespace) {
 		}
 	}
 
+	var message = {
+		"type": "settings_update",
+		"data": {
+			"changes": changes
+		}
+	};
+
 	chrome.tabs.query({}, function (tabs) {
 		tabs.forEach((tab) => {
 			try {
-				var message = {
-					"type": "settings_update",
-					"data": {
-						"changes": changes
-					}
-				};
-
 				debug("Sending storage changes to tab", tab.id);
 
-				chrome.tabs.sendMessage(tab.id, message);
+				chrome.tabs.sendMessage(tab.id, JSON.parse(JSON.stringify(message)));
 			} catch (e) {
 				console.error(e);
 			}
 		});
 	});
+
+	if (typeof imu_userscript_message_sender === "function") {
+		imu_userscript_message_sender(message);
+	}
 });
 
 function tabremoved(tabid) {
@@ -1153,6 +1555,10 @@ function tabremoved(tabid) {
 
 	if (tabid in override_download) {
 		delete override_download[tabid];
+	}
+
+	if (tabid in redirects) {
+		delete redirects[tabid];
 	}
 }
 
@@ -1227,4 +1633,54 @@ chrome.tabs.onActivated.addListener(function(activeInfo) {
 			});
 		}
 	}
+});
+
+var broadcast_message = function(message) {
+	chrome.tabs.query({}, function(tabs) {
+		for (var i = 0; i < tabs.length; i++) {
+			chrome.tabs.sendMessage(tabs[i].id, message);
+		}
+	});
+};
+
+// disable for now, doesn't seem to do anything, and untested if it does anything
+/*chrome.runtime.onSuspend.addListener(function() {
+	broadcast_message({type: "suspend"});
+});
+
+chrome.runtime.onSuspendCanceled.addListener(function() {
+	broadcast_message({type: "unsuspend"});
+});*/
+
+// https://stackoverflow.com/a/61074058
+var hotload = function() {
+	chrome.tabs.query({}, function(tabs) {
+		var userscript_file = chrome.runtime.getManifest().content_scripts[0].js[0];
+		for (var i = 0; i < tabs.length; i++) {
+			var tab = tabs[i];
+
+			try {
+				if (!tab || tab.discarded || !tab.url) continue;
+				if (!/^(https?|file):\/\//.test(tab.url)) continue;
+			} catch (e) {
+				console.error(e);
+				continue;
+			}
+
+			(function(tab) {
+				// yield
+				setTimeout(function() {
+					chrome.tabs.executeScript(tab.id, {
+						file: userscript_file
+					}, function(){handle_error();});
+				}, 1);
+			})(tab);
+		}
+	});
+};
+
+chrome.runtime.onInstalled.addListener(function() {
+	get_option("extension_hotreload", function(value) {
+		if (value) hotload();
+	}, true);
 });

@@ -29,7 +29,7 @@ const client = new Snoostorm(r);
 
 var dourl = require("./dourl.js");
 
-const links = new NodeCache({ stdTTL: 600, checkperiod: 100 });
+const links = new NodeCache({ stdTTL: 0, checkperiod: 100 });
 
 function is_number(n) {
 	if (typeof n === "number")
@@ -202,6 +202,8 @@ function get_wikioptions_for_subreddit(subreddit, cb) {
 
 //var lastchecked = Date.now();
 
+var started = Date.now();
+
 var whitelisted_subreddits = [
 	"maximagetest"
 ];
@@ -244,16 +246,23 @@ if (true) {
 
 		// for testing purposes
 		var post_subreddit = post.subreddit.display_name.toLowerCase();
-		if (whitelisted_subreddits.indexOf(post_subreddit) < 0)
-			return;
+		if (false) {
+			if (whitelisted_subreddits.indexOf(post_subreddit) < 0)
+				return;
+		}
 
 		if (post.domain.startsWith("self.")) {
 			return;
 		}
 
 		var current_time = Date.now();
-		if ((current_time - (post.created_utc * 1000)) > 60*1000) {
-			console.log("Post is too old", post.permalink, current_time, post.created_utc);
+		var created_millis = post.created_utc * 1000;
+		/*if ((current_time - created_millis) > 60*1000) {
+			console.log("Post is too old", post.permalink, current_time, created_millis, current_time - created_millis);
+			return;
+		}*/
+		if (created_millis < started) {
+			console.log("Post is too old", post.permalink, started, created_millis, started - created_millis);
 			return;
 		}
 
@@ -281,12 +290,12 @@ if (true) {
 			}
 		}
 
-		if (links.get(post.permalink) === true) {
+		if (links.get(post.id) === true) {
 			//console.log("Already processed " + post.permalink + ", skipping");
 			return;
 		}
 
-		links.set(post.permalink, true);
+		links.set(post.id, true);
 
 		var url = post.url;
 

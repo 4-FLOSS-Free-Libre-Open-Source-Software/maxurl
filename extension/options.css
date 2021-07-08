@@ -157,7 +157,7 @@ textarea {
 .option input[type="text"] {
   border: 1px solid #0af;
   font-family: sans-serif;
-  padding: 6px;
+  padding: 5px;
   margin: 0em .3em;
   -moz-appearance: textfield;
 }
@@ -351,7 +351,7 @@ b, strong {
   font-weight: 700;
 }
 
-code {
+code, pre {
   font-family: monospace;
   background: #eee;
   color: #000;
@@ -373,7 +373,7 @@ code {
 
 label, button, .button, select, .tab {
   display: inline-block;
-  padding: 6px 14px;
+  padding: 5px 10px;
   margin: 0px 5px;
   border: 1px solid #0af;
   cursor: pointer;
@@ -386,6 +386,12 @@ label, button, .button, select, .tab {
   user-select: none;
 }
 
+/* for wrapping */
+.tab {
+  margin-top: 5px;
+  margin-bottom: 5px;
+}
+
 #options button.small {
   margin: 2px 4px;
   padding: 4px 8px;
@@ -394,6 +400,10 @@ label, button, .button, select, .tab {
 #options button.removebtn {
   background: #c00;
   border-color: #c00;
+}
+
+button.revert-button {
+  padding: 4px 4px;
 }
 
 button:active, .button:active {
@@ -443,6 +453,16 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
 .option {
   padding: .8em;
 }
+
+.option.trigger_profile {
+  padding-top: 0;
+  margin-left: .5em;
+}
+
+.option table.option-table {
+  border: 0;
+}
+
 .option strong {
   font-weight: 400;
   display: inline-block;
@@ -451,9 +471,22 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
   border-bottom: 1px dashed #999;
 }
 
+.option strong.no-title {
+  border-bottom: none;
+}
+
 .option .name_td {
   width: 22em;
   padding-right: .5em;
+}
+
+.option.trigger_profile .name_td {
+  width: 21.5em;
+}
+
+/* this class is added for backwards compatibility */
+.option .name_td_va_middle {
+  vertical-align: middle;
 }
 
 .option .name_td.value_modified strong {
@@ -487,9 +520,18 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
   text-align: center;
   margin: 50px 10px;
   margin-bottom: 30px;
+  max-width: 700px;
 }
 
 .tab {
+  border-color: #ccc;
+}
+
+.dark .tab {
+  border-color: #777;
+}
+
+.tab.active {
   border-color: transparent;
 }
 
@@ -568,7 +610,7 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
 #options .subcat.frame {
   border: 1px solid #ccc;
   margin-top: 1.5em;
-  margin-bottom: 1em;
+  margin-bottom: 1.5em;
 }
 
 .dark #options .subcat.frame {
@@ -624,6 +666,7 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
   font-style: italic;
   margin-top: 1em;
   margin-left: 2em;
+  max-width: 30em;
 }
 
 .center-outer {
@@ -706,6 +749,11 @@ input:checked + label, button, .button, .dark .button, .button:visited, .dark .b
 #options .disabled .requirements {
   margin-left: 1.5em;
   margin-top: 1em;
+  width: 30em;
+}
+
+.hidden {
+  display: none;
 }
 
 

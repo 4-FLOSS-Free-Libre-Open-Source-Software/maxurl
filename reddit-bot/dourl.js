@@ -108,18 +108,24 @@ function inuserblacklist(x, blacklist) {
 }
 
 var base_headers = {
-	"User-Agent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36',
-	"Pragma": 'no-cache',
-	"Cache-Control": 'max-age=0',
-	"Accept": 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-	"Accept-Encoding": "gzip, deflate, br",
-	"Accept-Language": "en-US,en;q=0.9"
+	//"user-agent": 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.106 Safari/537.36',
+	"user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.163 Safari/537.36",
+	"pragma": 'no-cache',
+	"cache-control": 'max-age=0',
+	"accept": 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+	"accept-encoding": "gzip, deflate",
+	"accept-language": "en-US,en;q=0.9"
 };
 
-function getimagesize(url) {
+function getimagesize(url, is_first) {
 	if (typeof (url) === "string") {
 		var headers = JSON.parse(JSON.stringify(base_headers));
 		headers.Referer = "https://www.reddit.com/r/all/";
+
+		// for Tumblr
+		if (is_first)
+			headers.accept = "*/*";
+
 		return probe(url, {
 			// mimic the browser to avoid problems with photobucket or wikia urls
 			headers: headers
@@ -199,6 +205,9 @@ function is_googlephotos(domain, url) {
 	//   https://lh3.googleusercontent.com/ET-I3WGzylf5h2QIpdyuRrWGoTb3C3DVRow4oAOpt7VuOccWLjyUoWb2iW0kmgle-mN8yTYCZkYJvM6w-FLDuo7Yp7TpTi1YzldjX1Y2qzAfWQ_0Yd0LlGwS18gpYUpROhnmEBO6CeqjuTvBPZTtrf-eTnqCgTaOLNL0ENOgW0EUS1ZxJsdZ_TYHznqUveHD8hcko93CETrh2IeGXKYDGzM0wDmfD836jgroWJTHOXKUr7wFbKghZmmudMfsU4EEn8WrkU_8GJYaDCRnxj_aGtIWBXn1wh4gqOY7OnTR7BQXp7I0eH06B6Cy3C9sTFWuJU5NBoZORLlSs5zCJ-b3Bbc_BEB0xbsHJ_mAziE6bsHCcniOdJ8SNqNQgW9uoW38tY5MKFg-knhfSNxAk2sGBTQ2wczQV6uTUll5ZVOWAPVkwYCX9Ky6gjd-s9ymx-pR7Ray10mDv1KZ1NeqAXdbVAV30tPYv6HnCe1n4C9y_PnuBI688t9k0NNqBjDj-h8pEVdmCjUx2ZEFp5mTBxJCau2sgI59HGrE_6D7XaUWm294kWlOfGrkPeTE_S8ssaCE7DV-CBmtRoWQFHXlZOa9AL750j9dgMurdn4PjpROUALhl7bHpim9o8jc_vOrAc_ZJdAVmcXigFx8KD_ltLq8MbwNpCoMKZr-uQ=s0?imgmax=0
 	if (domain.match(/\.googleusercontent\.com$/) ||
 		domain.match(/\.ggpht\.com$/)) {
+		if (/\/proxy\//.test(url))
+			return true;
+
 		var p1 = url.replace(/^[a-z]+:\/\/[^/]*\/([^/]*).*?$/, "$1");
 		console.log(p1.length);
 		return p1.length > 450;
@@ -208,12 +217,24 @@ function is_googlephotos(domain, url) {
 }
 
 function is_youtube_url(url) {
-	match = url.match(/^[a-z]+:\/\/(?:www\.)?youtube\.com\/+watch\?(?:.*&)?v=([^&#]*)/);
-	if (!match) {
-		match = url.match(/^[a-z]+:\/\/(?:www\.)?youtu\.be\/+([^?&#]*)/);
+	var regexes = [
+		/^[a-z]+:\/\/(?:(?:www|m)\.)?youtube\.com\/+watch\?(?:.*&)?v=([^&#]*)/,
+		/^[a-z]+:\/\/(?:(?:www|m)\.)?youtu\.be\/+([^?&#]*)/,
+		/^[a-z]+:\/\/i\.ytimg\.com\/+([^?&#]*)/,
+		/^[a-z]+:\/\/(?:[^/]+\.)?(?:gfycat|redgifs)\.com\//,
+		/^[a-z]+:\/\/(?:[^/]+\.)?(?:instagram|facebook|patreon)\.com\//,
+		/^[a-z]+:\/\/(?:www\.)?(?:vimeo|dailymotion)\.com\//,
+		/^[a-z]+:\/\/(?:www\.)?twitter\.com\//,
+		/^[a-z]+:\/\/(?:www\.)?imgur\.com\/+(?:(?:a|gallery)\/+)?[^/.]+(?:[?#].*)?$/,
+		/^[a-z]+:\/\/(?:(?:www|v)\.)?reddit\.com\//
+	];
+
+	for (var regex of regexes) {
+		if (regex.test(url))
+			return true;
 	}
 
-	return !!match;
+	return false;
 }
 
 function npify(text) {
@@ -286,11 +307,24 @@ function dourl_inner(big, url, post, options, cb) {
 		return;
 	}
 
+	for (var i = 0; i < big.length; i++) {
+		if (big[i].is_pagelink) {
+			// allow imgur pagelinks
+			if (/^[a-z]+:\/\/(?:www\.)?imgur\.com\//.test(big[i].url)) {
+				big.splice(i, 1);
+				break;
+			}
+
+			console.log("Page link: ", big[i]);
+			return;
+		}
+	}
+
 	console.log(url);
 	console.log(big);
 	console.log("---");
 
-	getimagesize(url).then(
+	getimagesize(url, true).then(
 		(data) => {
 			log_entry.orig_probe = data;
 			if ("headers" in log_entry.orig_probe)
@@ -357,6 +391,11 @@ function dourl_inner(big, url, post, options, cb) {
 					var wr = newdata.width / data.width;
 					var hr = newdata.height / data.height;
 
+					if (data.type === "gif" && newdata.type !== "gif") {
+						console.log("Would un-gifify image");
+						return;
+					}
+
 					var r;
 
 					if (true) {
@@ -386,8 +425,11 @@ function dourl_inner(big, url, post, options, cb) {
 						}
 
 						var linkcomment = "";
-						if (options.shocking)
+						if ((newdata.height * newdata.width) > (10*1000 * 10*1000)) {
+							linkcomment = " (due to its size, opening this may consume a significant amount of RAM)";
+						} else if (options.shocking) {
 							linkcomment = " (click at your own risk...)";
+						}
 
 						if (options.comment_header)
 							comment += options.comment_header + "\n\n";
@@ -397,6 +439,7 @@ function dourl_inner(big, url, post, options, cb) {
 							.replace(/\\/g, "\\\\")
 							.replace(/_/g, "\\_")
 							.replace(/\*/g, "\\*")
+							.replace(/[[]/g, "\\[")
 							.replace(/]/g, "\\]") + "](" + newdata.url.replace(/[)]/g, "\\)") + ")" + linkcomment + "\n\n";
 
 						if (new_domain === "pbs.twimg.com" &&
@@ -446,7 +489,9 @@ function dourl_inner(big, url, post, options, cb) {
 						}
 
 						if (options.original_page && big.extra && big.extra.page) {
-							comment += "*****\n\nOriginal page: " + big.extra.page + "\n\n";
+							// this would just be spammy
+							if (new_domain !== "i.imgur.com")
+								comment += "*****\n\nOriginal page: " + big.extra.page + "\n\n";
 						}
 
 						//var faq_link = "https://www.reddit.com/r/MaxImage/comments/8znfgw/faq/";
@@ -646,7 +691,8 @@ var base_options = {
 	add_about_link: true,
 	add_imu_links: true,
 	imgur_ua: null,
-	imgur_cookie: null,
+	//imgur_cookie: null,
+	imgur_cookie: "frontpagebetav2=1; retina=0; over18=1",
 	min_ratio: 1.3,
 	thresh_px: 200
 };
@@ -665,6 +711,22 @@ function dourl(url, post, options, cb) {
 
 	var jar = request.jar();
 
+	var imgurcookies = {
+		//"frontpagebetav2": "1",
+		"retina": "0",
+		"over18": "1",
+		"postpagebeta": "0",
+		"postpagebetalogged": "0"
+	};
+
+	for (var cookiename in imgurcookies) {
+		var cookievalue = imgurcookies[cookiename];
+		jar.setCookie(request.cookie(cookiename + "=" + cookievalue), "https://www.imgur.com");
+		jar.setCookie(request.cookie(cookiename + "=" + cookievalue), "https://imgur.com");
+	}
+
+	//console.log(jar);
+
 	if (!options) {
 		options = {};
 	}
@@ -678,6 +740,7 @@ function dourl(url, post, options, cb) {
 	var bigimage_options = {
 		fill_object: true,
 		force_page: true,
+		rule_specific: {},
 		//exclude_videos: true,
 		//allow_thirdparty: true,
 		filter: function (url) {
@@ -689,11 +752,12 @@ function dourl(url, post, options, cb) {
 			var headers = JSON.parse(JSON.stringify(base_headers));
 			if (options.headers) {
 				for (var header in options.headers) {
-					var value = options.headers[header];
+					var headername = header.toLowerCase();
+					var value = options.headers[headername];
 					if (value)
-						headers[header] = value;
+						headers[headername] = value;
 					else
-						delete headers[header];
+						delete headers[headername];
 				}
 			}
 
@@ -754,14 +818,20 @@ function dourl(url, post, options, cb) {
 		}
 	};
 
-	if (options.imgur_ua && options.imgur_cookie) {
-		bigimage_options.rule_specific = {
-			imgur_nsfw_headers: {
-				Cookie: options.imgur_cookie,
-				"User-Agent": options.imgur_ua
-			}
+	if (options.imgur_cookie) {
+		bigimage_options.rule_specific.imgur_nsfw_headers = {
+			cookie: options.imgur_cookie
+			//"User-Agent": options.imgur_ua
 		};
+
+		if (options.imgur_ua) {
+			bigimage_options.rule_specific.imgur_nsfw_headers["user-agent"] = options.imgur_ua;
+		}
 	}
+
+	// no video support, so this is useless
+	bigimage_options.rule_specific.tiktok_no_watermarks = false;
+	bigimage_options.rule_specific.twitter_use_ext = true; // we don't want ?name=orig&format=jpg instead of .jpg?name=orig
 
 	bigimage(url, bigimage_options);
 }
@@ -815,5 +885,15 @@ function dourl(url, post, options, cb) {
 //dourl("https://connectgalaxy.com/gallery/icon/309557/taggable");
 // should fail (bad-if), nsfw!
 //dourl("https://i.imgur.com/4dLcGhR.gif")
+// tumblr ("br" encoding shouldn't be supported)
+//dourl("https://66.media.tumblr.com/2b129630fe50ae796d9383c5ba6ba35b/9e0fb8a88fdd1bdf-10/s640x960/d1a52d700422d91b37d653867fcadf46e933a1b1.jpg");
+//dourl("https://66.media.tumblr.com/5f828c461e4b7b78246ce02e98c92406/be7c88941cb30a9f-d6/s540x810/f48956b3c78b9bc234a4878221ddf67514d177a9.png");
+// huge image (10652x14204), nsfw!
+//dourl("https://i.imgur.com/zsSsjXJ.jpg");
+//dourl("https://img39.pixhost.to/images/373/138394353_3s3a1fiv9wfy.jpg");
+// ungififying, nsfw!
+//dourl("https://i.imgur.com/MdHTKCp.gif");
+// youtube url
+//dourl("https://i.ytimg.com/vi/q8skXJreN2Y/mqdefault.jpg");
 
 module.exports = dourl;

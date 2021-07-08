@@ -1,3 +1,1075 @@
+0.19.5
+
+New features:
+
+ * Option to enable popup when fullscreened (disabled by default, thanks to ComedicFox for the idea)
+ * Options to change popup zoom behavior when held (unset by default, thanks to madman06 for the idea)
+ * Option to toggle redirection tooltip (enabled by default, thanks to DevWannabe-dot for the idea)
+ * Support for ~30 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Reddit)
+
+Bugfixes:
+
+ * Galleries work again, fixing a regression since 0.19.3 (thanks to remlap for reporting)
+ * Popup buttons/mask will no longer trigger other mousedown handlers in the page (thanks to Noodlers for reporting)
+ * Prevent redirecting if source tab is video/audio and redirecting to/from video/audio is disabled (thanks to InSimpleTermsJordan for reporting)
+ * Fix audio/video detection for redirection (thanks to InSimpleTermsJordan for reporting)
+ * Fix HEAD requests not working properly with cache (#826, thanks to MinuteAd8502 for reporting)
+
+Special thanks to MinuteAd8502, Noodlers, remlap, snek, InSimpleTermsJordan, Zui, madman06, DevWannabe-dot, Liz, nimbuz, ayunami2000, fedesk, fireattack for their contributions and reports for this release
+
+---
+
+0.19.4 was used for resubmitting the addon to Mozilla, there are no functional changes from 0.19.3.
+
+---
+
+0.19.3
+
+<b>Note: When sideloading this version under a chromium-based browser, it will "create" a new addon instead of updating in-place. Make sure to export your settings before updating!</b>
+
+New features:
+
+ * Support for ~25 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Discord, Instagram, Tumblr, Twitter)
+ * Checks for valid elements are cached, improves performance on certain pages
+
+Bugfixes:
+
+ * Fix popup under websites that override `transition-duration` (thanks to Noodlers for reporting)
+
+Special thanks to MinuteAd8502, Wisedrow, remlap, Noodlers, fedesk, Afterpwn, nimbuz, sn3akyb3ar for their contributions and reports for this release
+
+---
+
+0.19.2
+
+New features:
+
+ * Option to specify maximum source size (thanks to Raitzu for the idea)
+ * Option to zoom out towards page middle (disabled by default, thanks to Noodlers for the idea)
+ * Option to control referer headers for JDownloader batch downloading (set to per-domain by default)
+ * Support for ~45 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Fandom/Wikia)
+
+Bugfixes:
+
+ * Work around a chrome bug where volume changing through mouse wheel doesn't work under bilibili.com (#771, thanks to isBoom for reporting)
+ * Fix rotated popups not behaving properly with "movement" popup position (#777, thanks to Noodlers for reporting)
+ * Support backslash key on less common keyboard layouts (thanks to Noodlers for reporting)
+ * Zooming out with incremental zoom will not jump around anymore when popup size < viewport size
+ * Fix JDownloader re-processing images (thanks to Jiaz from JDownloader)
+ * Fix crashes on sites where JSON.stringify is blocked
+
+Special thanks to nimbuz, Noodlers, nimuxoha, isBoom, Raitzu, Rainy, KyuJuEX099, fedesk, Liz, MinuteAd8502, Jiaz, snec for their contributions and reports for this release
+
+---
+
+0.19.1
+
+<b>Note: Instagram's native API (which finds 1440x images) is disabled by default with this release.</b> You can enable it if you wish ("Instagram: Use native API" under Rules), but it is known to flag accounts as of a recent Instagram update.
+
+New features:
+
+ * Option to keep thumbnail size when replacing images (thanks to Raitzu for the idea)
+ * Option to control zoom on hold
+ * Option to replace special characters with underscores when downloading (#746, thanks to Darkwolflair for reporting)
+ * New `date` format variable, which will use either the created or updated date when available (in that order)
+ * Support for ~70 new websites (using ~35 new rules)
+
+Improvements:
+
+* Various improvements/fixes to existing rules (including Google Images, Instagram, Reddit)
+* `updated_date` will be set to `created_date` if it doesn't exist (thanks to AdClear247 for reporting)
+
+Bugfixes:
+
+ * Use chronological order for links in JDownloader
+ * Avoid crash when network changes while requesting (thanks to AdClear247 for reporting)
+ * Forcing "Save as" dialog will no longer ignore the filename
+
+Special thanks to AdClear247, Noodlers, Liz, Anamon, jollld, C4illin, Broly, fedesk, Brendan Castaneda, M. AL-hejji, Darkwolflair, remlap, Johnny, elvisef, thomas-ed, Art-2, dym-sh, ayunami2000, VJ, Raitzu, Speedy, kellnerd for their contributions and reports for this release
+
+---
+
+0.19.0
+
+New features:
+
+ * Support for downloading album with JDownloader rather than as a zip file
+ * Equality and contains (+regex) operators for filename formatting
+ * User-specified variables for filename formatting
+ * Special variables `prefix` and `suffix` (user-set) are now automatically prefixed/suffixed to the filename
+ * Support for ~15 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Facebook, Flickr, Instagram)
+ * Downloading a gallery through a zip file will now default to storing under a top-level directory
+
+Bugfixes:
+
+ * Large albums (~5000+ items) will no longer crash gallery downloading
+ * Fix dots in filenames cutting off the rest of the filename (#718, thanks to AdClear247 for reporting)
+ * Albums using `album_info` will no longer load all images
+ * Fix crashing when loading blobs on different context IDs under Firefox
+
+Special thanks to fedesk, AdClear247, elvisef, ayunami2000, dungeon_addiction, remlap, Owyn, LeGiTiM, llacb47 for their contributions and reports for this release
+
+---
+
+0.18.3
+
+New features:
+
+ * Support for ~15 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Amazon)
+
+Bugfixes:
+
+ * Fix trigger failing to work due to trigger behavior being modified (thanks to anonamouse on discord for reporting)
+
+Special thanks to fireattack, anonamouse, remlap, Brendan Castaneda, Zui for their contributions and reports for this release
+
+---
+
+0.18.2
+
+New features:
+
+ * Russian translation (thanks to vanja-san)
+ * Option to control popup origin when overflowing (set to middle by default)
+ * Option to center the popup on overflow (disabled by default)
+ * Option to use last zoom (#701, set to albums by default, thanks to Michael82548 for the idea)
+ * Option for userscript to use web archive to load libraries (disabled by default)
+ * Option for userscript to toggle integrity checks for libraries (enabled by default)
+ * Support for ~25 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Discogs, Soundcloud, TikTok)
+ * Various improvements to the translation framework
+ * Various improvements to the options page
+ * Support importing settings from a URL
+
+Bugfixes:
+
+ * Fix "Page middle" popup position when overflowing
+
+Special thanks to vanja-san, AdClear247, Regis, PatPanacea, fedesk, rEnr3n, alessio89g, Michael82548, llacb47, Broly for their contributions and reports for this release
+
+---
+
+0.18.1
+
+New features:
+
+ * Option to add info file for zip (#682, enabled by default)
+ * New `items_amt` format variable for zip files
+ * Option to control hot (re)loading the extension (enabled by default)
+ * Right click can now be bound by itself to any shortcut. Binding this to anything global (such as the trigger key) is not recommended.
+ * Support for ~15 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Discogs, Instagram, Twitter)
+ * Hold key can be used with any popup configuration, the "Use hold key" option has been removed (always enabled)
+
+Bugfixes:
+
+ * Fix userscript crash under Firefox for certain websites, such as Twitter (#678, thanks to modelfe for reporting)
+ * Shift+right click should now be better supported under Firefox (#679, thanks to modelfe for reporting)
+ * Binding right click should work better (#680, #297, thanks to samwolfe2000 for reporting)
+ * Timeouts when loading will no longer hang
+ * Fix memory leak with gallery download
+ * Fix play/pause broken when native video controls are disabled, then enabled through a keybinding (#531)
+ * Anonymous requests are less likely to fail under the extension due to CORS issues (thanks to remlap for reporting)
+
+Special thanks to modelfe, PatPanacea, samwolfe2000, remlap, jollld for their contributions and reports for this release
+
+---
+
+0.18.0
+
+New features:
+
+ * Key to download all images from album (#284, bound to Shift+D by default)
+   * Option to control downloading unchanged media from album (enabled by default)
+   * Option to control the zip filename format
+   * Option to store all files in a top-level folder in the zip file (#674, disabled by default)
+ * An extra popup profile is added (thanks to remlap for reporting)
+ * Option to use a simpler progress bar when replacing images/downloading media (#673, enabled by default)
+ * Option to load media anonymously (#667, primarily useful for screenshots)
+ * Option to use JPG for the screenshot file format (#666, thanks to remlap for the idea)
+ * Option to replace media instead of popping up (#668, thanks to TurretBot for the idea)
+ * Support for 9 new websites (using 4 new rules)
+
+Improvements:
+
+ * Various improvements/fixes for existing rules (including DeviantArt, VK)
+ * Popping up for plain hyperlinks is now enabled by default
+ * More fine-grained progress when replacing images
+ * Extension should be automatically applied to all tabs when installing/upgrading
+ * Extension (under chrome) should unload more cleanly on existing pages when disabled/uninstalled
+
+Bugfixes:
+
+ * Replace Images will also override images with srcset (#659, thanks to InSimpleTermsJordan for reporting)
+ * Replace Images will support replacing links even if "Popup for plain hyperlinks" is disabled
+ * Replace Images will not use data urls if disabled for links
+ * HLS/DASH will not be used if disabled due to requirements being unmet (thanks to xyliaa for reporting)
+ * Downloading data urls no longer fails under the extension (thanks to remlap for reporting)
+ * Saving the video screenshot will no longer sometimes also save the video, due to keyup handlers not being properly called
+ * Certain websites that return an incorrect content-type should be better supported for the popup (#672, thanks to jollld for reporting)
+ * DeviantART will no longer log out for firefox extension (thanks to Иван Хомяков for reporting)
+ * Empty optional format variables (such as `{variable?}`) work properly now
+
+Special thanks to InSimpleTermsJordan, TurretBot, remlap, xyliaa, fedesk, jollld, Иван Хомяков, TheLastZombie for their contributions and reports for this release
+
+---
+
+0.17.0
+
+New features:
+
+ * Experimental option to download HLS/DASH streams (#292, disabled by default)
+  - Note that this is currently not supported under Firefox.
+ * Option to prefer muxing into MP4 over MKV when downloading streams (#643, disabled by default)
+ * Option to toggle autoplaying videos (#642, enabled by default, thanks to Noodlers on discord for the idea)
+ * Option to use Twitter URLs with extensions (#639, disabled by default, thanks to modelfe on github for reporting)
+ * Initial Italian translation (#647, thanks to Mannivu on github)
+ * Key to screenshot video (#640, bound to Shift+S by default)
+ * New `id` field for filename formatting
+ * New `is_screenshot` field for filename formatting (used to separate formats for screenshots and regular downloads)
+ * Adding `.` to the end of a truncation adds an ellipsis if the text was truncated
+ * Support for ~65 new websites (using ~40 new rules)
+
+Improvements:
+
+ * Initial work towards reorganizing the settings page. Notably, most shortcuts are now housed in their own category
+ * Various improvements/fixes to existing rules (including Instagram)
+ * Significant performance improvement for extension when querying large files
+ * Category name is added to the names of required options if they are located in a different tab (#646)
+ * Filename format variable will now be blank (instead of "download") if the filename is blank. To replicate the old behavior, use `{filename?download}{ext?}`. (thanks to remlap for reporting)
+ * Default volume can now be set regardless of whether the mute setting is enabled (affecting the default volume once unmuted)
+ * Audio support is now a profiled setting
+
+Bugfixes:
+
+ * Fix a potential infinite loop with failed dash/hls streams
+ * Fix blacklist not being applied when redirecting with background page (#639, thanks to modelfe on github for reporting)
+ * Add file extension if missing when using a formatted filename
+ * Fix settings requirements only checking the first trigger profile
+ * The popup will no longer fail to initialize if autoplay fails (thanks to remlap for reporting)
+
+Special thanks to dym-sh, Mannivu, remlap, fedesk, modelfe, GoblinLegislator, Noodlers, Regis, Art-2 for their contributions and reports for this release
+
+---
+
+0.16.3
+
+New features:
+
+ * Support for ~10 new websites (using ~5 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules
+
+Bugfixes:
+
+ * Fix cache-related issues where the popup would fail to load for a second time (#633, thanks to Darkwolflair on github for reporting)
+
+Special thanks to elvisef, Darkwolflair, fedesk for their contributions and reports for this release
+
+---
+
+0.16.2
+
+New features:
+
+ * Option to allow replacing plain hyperlinks, either to new content or to the media itself (#617, thanks to elvisef on github for reporting)
+ * Option to popup the document URL for pagelink rules (disabled by default)
+ * Option to only enable background CSS/mask on hold (#538, disabled by default)
+ * New `-imu-title` CSS property to customize the tooltip title when hovering over UI buttons (#622, thanks to Noodlers on discord for the idea)
+ * Support for `_ago` for date formatting (#622, thanks to Noodlers on discord for the idea)
+ * New `updated_date` property (#622, thanks to Noodlers on discord for the idea)
+ * Support for ~30 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including DeviantART, Facebook, Gfycat/Redgifs)
+ * Multiple requests to the same media at the same time will be batched together to lessen bandwidth usage and server load
+
+Bugfixes:
+
+ * Fix crashing on certain URLs due to media_info missing (thanks to remlap on discord for reporting)
+
+Special thanks to elvisef, Noodlers, MrSeyker, remlap, doio, GoblinLegislator, LeGiTiM for their contributions and reports for this release
+
+---
+
+0.16.1
+
+This is an emergency bugfix release for the script failing to load under older browsers.
+
+New features:
+
+ * Support for 6 new websites (using 4 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules
+
+Bugfixes:
+
+ * Fix crash on browsers that don't support named capture groups (#618, #616, thanks to snottyone and MrSeyker on github for reporting)
+ * Fix Replace/Highlight Images keybindings not working if popup is disabled (#619, thanks to elvisef on github for reporting)
+ * Fix settings not being dynamically updated
+
+Special thanks to elvisef, snottyone, MrSeyker, doio for their contributions and reports for this release
+
+---
+
+0.16.0
+
+New features:
+
+ * Initial support for audio
+ * Profiled option to toggle videos in popup (#573, thanks to many people for suggesting this feature, directly or indirectly)
+ * Profiled option to toggle HLS/DASH in popup (#582, thanks to fedesk on discord for the idea)
+ * "Report issue" is added as a menu command for the userscript
+ * Option to remove size constraints for replaced images (#593, thanks to elvisef on github for reporting)
+ * Option to set custom CSS for replaced images (#614, thanks to elvisef on github for reporting)
+ * Support for `_unix` and `_unix_ms` for date formatting for filenames (thanks to remlap on discord for the idea)
+ * Support for ~95 new websites (using ~40 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including BBC, Flickr, Instagram, Nitter)
+ * Context menu now works for video and audio elements too
+ * Performance improvements for options page, particularly under Firefox
+
+Bugfixes:
+
+ * Fix no extension on non-JPEG images when saving when the original filename doesn't have an extension (thanks to remlap on discord for reporting)
+ * Fix no extension for rules that specify a custom filename (thanks to remlap on discord for reporting)
+ * Fix a few minor header-related issues in the extension
+ * Fix crashing on sendvid.com for the userscript
+ * Avoid sending head requests to DASH/HLS streams that can't handle head requests
+ * Fix `author_username` and `caption` not being able to be used in filename formats (thanks to GoblinLegislator on github for reporting)
+
+Developer notes:
+
+ * The `video` property has been replaced with `media_info`. While the `video` property is not removed, rules are no longer guaranteed to use the property.
+
+Special thanks to TheLastZombie, remlap, GoblinLegislator, elvisef, fedesk, Noodlers, fireattack, Anamon, kernoeb, dym-sh, arovane, nimuxoha, fireattack for their contributions and reports for this release
+
+---
+
+0.15.1
+
+This is an emergency bugfix release for the issue where blacklisted sites redirect to "h".
+
+New features:
+
+ * Support for 5 new websites (using 4 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Twitch)
+
+Bugfixes:
+
+ * Fix invalid behavior with similar triggers (#556, thanks to Hlsgs on github for reporting)
+ * Fix images on sites added to blacklist redirecting to "h" (#583, thanks to nimuxoha in github for reporting)
+
+Special thanks to Hlsgs, Ox, nimuxoha, nijaz-lab, Urkchar, dtndmd for their contributions and reports for this release
+
+---
+
+0.15.0
+
+New features:
+
+ * A second keyboard trigger is available, currently to support using a different popup action (#556, thanks to Hlsgs on github for the idea)
+ * Option to customize filename format (#409, thanks to mcOrmenos on discord for the idea)
+ * Option to prefer using higher quality videos over resolution for Instagram (enabled by default, thanks to Regis and fedesk on discord for their reports)
+ * Key to copy the media link to the clipboard (bound to Shift+C by default)
+ * Option to redirect even if the host page is HTML (#557, thanks to nijaz-lab on github for the idea)
+ * Option for "Popup Action" to open in background tab (#556, thanks to Hlsgs on github for the idea)
+ * Option for "Popup Action" to copy media link to clipboard (#435, thanks to lnp5131 on github for the idea)
+ * Option to discard clicks outside popup (disabled by default)
+ * Option to show disabled settings for alternate triggers (#561, disabled by default)
+ * Support for ~30 new websites (using ~25 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Facebook, Instagram, Pixiv, Twitter, YouTube)
+ * Tabs are now used by default for settings (#553, thanks to rEnr3n on github for reporting)
+ * Reloading the options page will now stay on the same tab instead of reverting to General
+ * Filenames for data URLs are now set to "download" (#559, thanks to remlap on discord for reporting)
+
+Bugfixes:
+
+ * HLS works under Firefox now (#514)
+ * Most websites that failed with HLS/DASH under the userscript should work now (due to better sandboxing)
+ * Fix UI positioning when zooming incrementally (thanks to Rnksts on discord for reporting)
+ * Subsequent trigger presses when Popup Action is set to New tab now work properly
+ * Editable divs (rich text editors, including most modern chat services) are now also properly handled in "Disable keybindings when editing text" (thanks to Melih Şirin on discord for reporting)
+ * SVG tags should work again without crashing
+
+Special thanks to nijaz-lab, llacb47, Regis, fedesk, rEnr3n, Hlsgs, Rnksts, lnp5131, remlap, mcOrmenos, coo11, Melih Şirin for their contributions and reports for this release
+
+---
+
+0.14.10
+
+New features:
+
+ * Support for ~20 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Amazon, Nitter, TikTok, Twitter)
+
+Bugfixes:
+
+ * Work around an issue with older Violentmonkey versions where XHR could fail if Array.prototype.reduce was invalid (thanks to Urkchar on discord for reporting)
+
+Special thanks to fedesk, dym-sh, llacb47, Urkchar for their contributions and reports for this release
+
+---
+
+0.14.9
+
+New features:
+
+ * Key to toggle displaying the popup UI (#387, bound to U by default, thanks to Runakanta on discord for the idea)
+ * Button to export settings to file (#529, thanks to fedesk on discord for the idea)
+ * Support for ~15 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Cloudinary, Instagram, Twitter)
+ * Minor performance improvements
+
+Bugfixes:
+
+ * "New tab" popup action shouldn't crash on data:// URLs anymore (thanks to fedesk on discord for reporting)
+ * Images from sites that didn't properly handle HEAD requests will no longer ignore HTTP errors when popup action is set to "new tab" (#533, thanks to eldobhatox on github for reporting)
+ * Fix certain sites failing to load the popup due to the script incorrectly believing the media to be invisible
+ * Fix userscript failing to load if "Support pointer-events: none" was previously modified (#541, thanks to PietroPizzi69 on github for reporting)
+
+Special thanks to fedesk, rEnr3n, remlap, eldobhatox, Runakanta, PietroPizzi69 for their contributions and reports for this release
+
+---
+
+0.14.8
+
+New features:
+
+ * Option to close the popup after scrolling past the end of a gallery (#471, thanks to Runakanta on discord for the idea)
+ * Support for ~40 new websites (using ~30 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Facebook, Imgur, Instagram, Patreon, Reddit, Tumblr, Twitter)
+ * Support for Twitter videos
+ * Videos can now be rotated too
+ * Settings are batch-loaded now, decreasing initial page load CPU usage and delay for the extension (#205)
+ * "Support pointer-events: none" has been replaced with "Element finding mode", which allows a new "Hybrid" option (set by default), to allow combining the speed of "Simple" and the thoroughness of "Full"
+ * Improved support for frames on certain websites
+
+Bugfixes:
+
+ * Triggering the popup through the context menu will now work for pages with multiple frames, such as DeviantART (thanks to KyuJuEX099 on discord for reporting)
+ * Redirection under the extension now respects when the extension is disabled, if "do redirection in extension" is enabled (#523, thanks to keophcp on github for reporting)
+ * Popups will no longer crash if using 3rd-party libraries on webpages that forbid eval for the userscript
+ * Zoom percent is no longer incorrect when rotating
+ * UI position is updated when rotating (#218)
+ * Certain rare infinite loops for host rules should now be fixed
+ * Pressing ESC while loading a video should now always cancel the popup from loading
+ * Fix crashes for certain rules
+ * Filesize is no longer forgotten with cached media
+
+Special thanks to keophcp, fireattack, Runakanta, synthtech, Melih Şirin, jloqfjgk, KyuJuEX099, YaBoiBurner, Yosh for their contributions and reports for this release
+
+---
+
+0.14.7
+
+New features:
+
+ * You can now move buttons to different positions on the popup (#247)
+ * Option to close the popup when the media is clicked (#498, thanks to bitst0rm on greasyfork for the idea)
+ * Option to customize the close popup key (#511, thanks to cosuwi on github for the idea)
+ * Option to toggle using the maximum quality for HLS/DASH videos (enabled by default)
+ * Option to control maximum quality for (currently) HLS/DASH videos (set to unlimited by default, thanks to Runakanta on discord for the idea)
+ * Support for ~40 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Kakao, Patreon, TikTok, Twitch, Wikia)
+
+Bugfixes:
+
+ * XML documents should now display properly under Firefox when the addon is active (#507, thanks to alexolog on github for reporting)
+ * Browsers with untranslated languages should no longer have translation failures due to a reference error (thanks to bitst0rm on greasyfork for reporting)
+
+Special thanks to keophcp, llacb47, dym-sh, AnhNhan, gtumanyan, remlap, Michael18751, bitst0rm, Ambler, alexolog, cosuwi, Runakanta for their contributions and reports for this release
+
+---
+
+0.14.6
+
+New features:
+
+ * You can now style individual UI buttons through CSS IDs
+ * Support for ~25 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Patreon)
+ * Improved French description (thanks to Machou on github for translating)
+
+Bugfixes:
+
+ * Don't redirect to text/plain images (thanks to Ambler on discord for reporting)
+
+Special thanks to llacb47, dym-sh, Machou, SlugMan336, Ambler for their contributions and reports for this release
+
+---
+
+0.14.5
+
+New features:
+
+ * Option to add a delay between requests for images in Replace Images (set to 0 seconds/disabled by default)
+ * Support for ~50 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Pixiv)
+ * PNG files within the extension have been optimized, and are now much smaller (#465, thanks to Magnus Boman for the PR)
+ * Filenames are automatically decoded (thanks to fireattack on discord for reporting)
+
+Bugfixes:
+
+ * Fix options button not working (regression from 0.14.4, thanks to fireattack on discord for reporting)
+
+Special thanks to llacb47, Magnus Boman, fireattack, StarCrunchMuncher for their contributions and reports for this release
+
+---
+
+0.14.4
+
+New features:
+
+ * Button to reset option to the default value in options
+ * Support for ~40 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including DeviantART)
+ * Support for custom XHR for HLS
+ * Unsupported video types (HLS/DASH when disabled) will no longer be needlessly requested (#460)
+ * Beginning to work towards more powerful CSS styling
+
+Bugfixes:
+
+ * Fix rule-specific settings not showing up when using tabbed settings (thanks to Иван Хомяков on greasyfork for reporting)
+ * Fix XHR abort() not being properly handled under extension if run before the request was initialized
+
+Special thanks to llacb47, MrSeyker, Иван Хомяков, remlap for their contributions and reports for this release
+
+---
+
+0.14.3
+
+New features:
+
+ * Support for ~25 new websites (using ~30 new rules)
+ * Option to toggle using DeviantART downloads (enabled by default)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including DeviantART, Reddit, YouTube)
+ * "Hold key" and "Close when leaving" can now be used for the keyboard trigger if "Don't close until mouse leaves" is enabled
+ * Minor performance improvements for popup mouseover feature
+
+Bugfixes:
+
+ * Fixed a bug where the userscript would fail to load for certain sites with adblock enabled due to access to `String.fromCharCode` being blocked
+
+Special thanks to llacb47, fireattack, Urkchar, Runakanta, Lerortle, MrSeyker for their contributions and reports for this release
+
+---
+
+0.14.2
+
+New features:
+
+ * Options to override horizontal/vertical scroll behavior for videos (thanks to Runakanta on discord for the idea)
+ * Option to invert the video seek direction (disabled by default)
+ * Option to use custom XHR for 3rd-party libraries (default: enabled for extension, disabled for userscript)
+ * Support for ~30 new websites (using ~30 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including YouTube)
+ * Adblock visibility workarounds are now only applied on the sites that are known to benefit.
+   This increases performance, but may cause regressions with unknown sites that were also affected. Please report any broken site you find!
+ * Improved translation framework to more easily add new languages, and support language subcodes
+
+Special thanks to llacb47, Runakanta, remlap, esdemirei for their contributions to this release
+
+---
+
+0.14.1
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Imgur)
+
+Bugfixes:
+
+ * Fixed a major regression in 0.14.0 where many images would fail to redirect or popup (thanks to mcOrmenos on discord for reporting)
+ * Fixed a bug where the popup media would fail to load for certain sites with adblock enabled (#430, thanks to lnp5131 on github for reporting)
+ * Fixed a bug where the node.js version would fail to load
+
+Special thanks to llacb47, lnp5131, mcOrmenos for their contributions to this release
+
+---
+
+0.14.0
+
+New features:
+
+ * Option to cache media (#416, enabled by default, thanks to lnp5131 on github for reporting)
+ * Option to control the time for media to remain cached (30 minutes by default)
+ * Option to resume cached videos (enabled by default)
+ * Option to only enable looping videos if they're smaller than a certain duration (disabled by default, thanks to Runakanta on discord for the idea)
+ * Option to enable resuming from source, even if the source is different (disabled by default)
+ * Option to pause the source video when the popup's video has loaded (enabled by default)
+ * Option to list settings in alphabetical order (disabled by default, thanks to Ambler on discord for the idea)
+ * Option to toggle an enabler/disabler key for the mouseover trigger (thanks to lnp5131 on github for the idea)
+ * Support for ~55 new websites (using ~30 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Bytedance, Imgur, Kakao, Facebook, Melon, Pixiv, TikTok, Twitter, YouTube)
+ * Cross-frame support should work better for the userscript (e.g. popping up for iframes)
+ * Much better Korean translation, thanks to Ambler on discord
+ * Better support for translations, through use of `.po` files
+ * The wording of a number of options have been clarified
+
+Bugfixes:
+
+ * Fixed a bug where pressing any key would cancel closing the popup for "Keep popup open until all triggers are released" (#410, thanks to lnp5131 on github for reporting)
+ * Fixed a bug where releasing a trigger key before the popup has finished opening with "Keep popup open until any/all triggers are released" (#417, thanks to lnp5131 on github for reporting)
+ * Fixed a bug where holding down the trigger key under some configurations would cause the popup to continually open (#415, thanks to lnp5131 on github)
+ * Fixed a bug where the mouseover option would fail for Twitter (#422, thanks to lnp5131 on github for reporting)
+
+Special thanks to Ambler, llacb47, lnp5131, dym-sh, jloqfjgk, Gertcha, Runakanta, esdemirei, Elliot Alderson for their contributions to this release
+
+---
+
+0.13.19
+
+New features:
+
+ * Support for direct images in SVGs
+ * Initial support for Facebook (currently only links)
+ * Support for ~30 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Likee, iTunes, Naver, TikTok)
+
+Bugfixes:
+
+ * When using fit/full and "zoom out fully to close", zooming out will now close the popup if the popup size hasn't changed (thanks to Runakanta on discord for reporting)
+ * Fix for infinite loop when using the option to use link rather than the image is enabled
+ * Fix for userscript failing on sites like Gfycat where `Math` is overridden when adblockers are used (extension is unaffected)
+
+Special thanks to llacb47, remlap, dym-sh, Urkchar, anonyno, and a-vrma for their contributions to this release
+
+---
+
+0.13.18
+
+New features:
+
+ * Option to display the link rather than the image for a linked image (#306, disabled by default)
+ * Option to customize the mouse jitter threshold for hiding the cursor (set to 5px by default)
+ * Option to use a 3rd-party watermark removal tool for TikTok (disabled by default)
+ * Support for ~30 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules
+
+Bugfixes:
+
+ * When using adblockers, some pages that refused to load the userscript entirely due to throwing an exception are now fixed
+ * Fix notification being shown for a downgraded version (thanks to Cuba on discord for reporting)
+
+---
+
+0.13.17
+
+New features:
+
+ * Option to control using `GM_download` based on the file size for the userscript (set to a maximum of 15MB by default)
+ * Support for ~30 new websites (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Discord, Instagram, Tumblr)
+ * Improvements to GraphCMS rule (thanks to dym-sh on github)
+ * Support for Instagram reels (thanks to remlap on discord for reporting)
+
+---
+
+0.13.16
+
+New features:
+
+ * Support for ~50 new websites (using ~25 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Amazon, Bitchute, Pinterest, YouTube)
+
+Bugfixes:
+
+ * Fix `Instagram: Use albums for post thumbnails` (thanks to remlap on discord for reporting)
+ * Fix opacity checks failing, occasionally returning the wrong image
+ * HLS failures will no longer fail loading the popup entirely if a backup is available
+ * Fix redirects to bad images
+
+---
+
+0.13.15
+
+New features:
+
+ * Support for ~25 new websites (using ~10 new rules)
+
+Improvements
+
+ * Various improvements/fixes to existing rules (including 500px, Instagram, YouTube)
+ * 500px is now supported when logged in for the extension (#305)
+
+Bugfixes:
+
+ * Blacklist should be properly implemented now
+ * When using adblockers, some pages that would refuse to open the popup are now fixed (extension is unaffected)
+ * When using adblockers, some pages that would open a blank video are now fixed
+ * Waiting cursor works more consistently on pages that use a `!important` cursor
+
+---
+
+0.13.14
+
+New features:
+
+ * Option to use webextension downloads to force using the save as dialog (#372, thanks to Pax Romana on discord for the idea)
+ * Options to control maximum width/height for the initial popup size (#208)
+ * Support for ~100 new websites, including Streamable (using ~20 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Wordpress, YouTube)
+ * Load time is decreased
+ * Performance improvements for options page
+ * Support for `pointer-events: none` is disabled by default, due to how buggy and cpu-intensive it can occasionally be
+ * HLS will automatically play the largest size available
+
+Bugfixes:
+
+ * Websites that override String.prototype.charAt will no longer fail for the userscript (extension is unaffected)
+ * When using uBlock Origin, some pages that would continually show the waiting cursor even after the popup had opened are now fixed for the userscript (extension is unaffected)
+ * Importing settings will no longer require reloading the page in order to view the new settings
+ * 'Close when leaving Popup/Both' now works for video elements as well
+
+---
+
+0.13.13
+
+New features:
+
+ * Option to toggle cancel loading the popup when triggers are released, if popup is set to close when triggers are released (enabled by default, thanks to cosuwi on github for the idea)
+ * Options to specify the amount of times (and the delay) to retry media that fails to load due to a 503 error (set to 3 retries and a delay of 2 seconds by default)
+ * Keys to increase/decrease the volume of a video (bound to 0 and 9 to increase/decrease the volume by default, volume change amount is set to 5% by default)
+ * Option to avoid using Instagram's web API (disabled by default)
+ * Option for the userscript to redirect to the largest image that doesn't require custom headers or forces download (disabled by default)
+ * Support for ~40 new websites (using ~5 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Instagram, YouTube)
+ * Options page load speed is improved
+ * Update for greasyfork redesign
+ * Number fields in settings will no longer accept non-numbers
+ * Framestepping will pause the video (thanks to remlap on discord for the idea)
+ * Significantly improve performance for sites that use non-pixel units for srcsets
+
+Bugfixes:
+
+ * Blacklist works more consistently now
+
+---
+
+0.13.12
+
+New features:
+
+ * Option to toggle using `GM_download` for the userscript (enabled by default)
+ * Keys to step a video frame-by-frame (bound to , and . for previous and next frames by default, framerate is set to 25fps by default)
+ * Support for ~45 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Instagram, TikTok, Reddit)
+ * TikTok now supports original videos again (thanks to remlap on discord)
+ * TikTok will now load original videos much quicker
+ * TikTok will fail less frequently (thanks to JoshuaCalvert on discord for reporting)
+ * Work around a server-side issue on Instagram returning invalid URLs (thanks to fireattack on discord for reporting)
+
+---
+
+0.13.11
+
+New features:
+
+ * Support for ~40 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Gfycat, IMDB, Instagram, Steam, TikTok)
+
+Bugfixes:
+
+ * Redirects from extension will send proper headers now
+ * Websites that override String.fromCharCode should work again
+
+---
+
+0.13.10
+
+New features:
+
+ * Option to support iframe elements (disabled by default)
+ * Support for ~10 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including IMDB, Snapchat, TikTok - thanks to remlap and JoshuaCalvert on discord)
+ * Snaps with single media won't fail anymore (thanks to remlap on discord for reporting)
+ * Support for overriding video headers in extension
+ * Support for file:// URLs (if allowed)
+
+---
+
+0.13.9
+
+This is an emergency fix release to fix websites (such as Facebook) redirecting to videos/images contained within the page.
+
+New features:
+
+ * Option to notify when update is available (disabled by default)
+ * Support for ~60 new websites (using ~15 new rules), including Dailymotion
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Vimeo, Wordpress, YouTube)
+ * Vimeo videos are supported
+ * More YouTube videos are now supported
+ * Minor performance improvements
+
+Bugfixes:
+
+ * Browsing Facebook will no longer redirect to videos (thanks to sir.saarim on discord for reporting)
+
+---
+
+0.13.8
+
+New features:
+
+ * Option to perform redirects using the extension's background page, significantly increases performance (enabled by default, thanks to fireattack on Discord and Jaden Pleasants on Firefox for reporting)
+ * Option to have the popup zoom in/out on open/close (disabled by default)
+ * Option to toggle underlining links in UI (enabled by default)
+ * Option to download image instead of opening popup (disabled by default)
+ * Support for ~35 new sites (using ~7 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including ArtStation, Instagram, TikTok)
+ * Support for links to Instagram images (thanks to Viserys on reddit for reporting)
+ * TikTok profile images are supported again (thanks to remlap on discord for reporting)
+
+Bugfixes:
+
+ * HEAD requests are no longer avoided by default when loading partially loaded images, due to regressions on certain sites
+
+---
+
+0.13.7
+
+This is an emergency release to fix Instagram videos, which were broken in the last release.
+
+New features:
+
+ * Support for 4 new sites (using 2 new rules)
+
+Improvements:
+
+ * Videos are fixed under Instagram (thanks to remlap on Discord for reporting)
+ * IGTV is fixed again (thanks to remlap on Discord for reporting)
+
+Bugfixes:
+
+ * Fix popup under pale moon (#349, thanks to Carl-Robert on github for reporting)
+
+---
+
+0.13.6
+
+New features:
+
+ * Option to display file size in popup (thanks to Regis on discord for the idea)
+ * Option to use safe glyphs in case the default ones aren't supported by the user's fonts (#347, thanks to liraqb on github for reporting)
+ * Key to open original page for popup if available (bound to N by default, thanks to Иван Хомяков on greasyfork for the idea)
+ * Support for 4 new sites (using 3 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Bilibili, DeviantArt, Gfycat/Redgifs, Instagram, Snapchat, TikTok, Tumblr)
+ * Tumblr now supports original sizes (thanks to Regis on discord)
+ * IGTV is better supported (thanks to remlap on discord)
+ * Instagram posts will sometimes both load quicker and work without API calls (thanks to Stencil on discord)
+ * Z-index sorting is more correct now
+
+Bugfixes:
+
+ * SVG tags with unicode characters will no longer fail to load (thanks to Rnksts on discord)
+ * SVG tags will no longer be wrongly tinted (thanks to Rnksts on discord)
+ * SVG images will no longer fail to load when arraybuffers are preferred over blob objects (thanks to Rnksts on discord)
+
+---
+
+0.13.5
+
+New features:
+
+ * Option to exclude image maps (enabled by default)
+ * Option to disable pointer events for popup (disabled by default, thanks to thewhiterabbit- on reddit for the idea)
+ * Option to enable pointer events for popup when held (enabled by default)
+ * Key to set popup fullscreen (bound to F by default)
+ * Option to display link in redirection tooltip for userscript (disabled by default, thanks to fireattack on discord for the idea)
+ * Option to specify how long before the redirection tooltip should hide itself (set to 7 seconds by default)
+ * Support for ~15 new websites (using ~10 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Artstation, Fandom/Wikia, Reddit)
+ * Don't popup for Reddit self posts (thanks to thewhiterabbit- on reddit for reporting)
+
+Bugfixes:
+
+ * Fix "Don't close until mouse leaves" option if mouse hasn't moved (thanks to Rnksts on discord for reporting)
+ * Fix popup not closing after mouse leaves if trigger keys are released before popup opens (thanks to Rnksts on discord for reporting)
+ * Fix popup hold disappearing when moving through a gallery
+ * Fix aspect ratio when video is made fullscreen (#330, thanks to remlap on discord for reporting)
+
+---
+
+0.13.4
+
+New features:
+
+ * Key to reset video speed to normal (bound to backspace by default, thanks to Rnksts on discord for the idea)
+ * Option to toggle displaying not-allowed cursor if the image can't be loaded (enabled by default, thanks to Rnksts on discord for the idea)
+ * Popup default zoom option to have the image fill the screen even if it's smaller ("Fill screen", thanks to whiterabb1t- on reddit for the idea)
+ * Option to link the original page for the image in the caption (enabled by default)
+ * Option to avoid HEAD requests when loading an incomplete image (enabled by default)
+ * Option to close popup when unheld (disabled by default)
+ * Support for ~40 new websites (using ~15 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Flickr, Instagram, Onlyfans, Reddit, Youtube)
+ * Performance for incomplete requests is vastly improved
+ * It will no longer popup for Recaptcha and hCaptcha (thanks for whiterabb1t- on reddit for reporting)
+ * Support for SVG tags is now disabled by default, due to the overwhelming majority of them being for icons
+
+Bugfixes:
+
+ * Popup will not begin centered when closed without holding and "Center popup on hold" is enabled
+ * Fix crash under Firefox (thanks to burchtree721 on reddit for reporting)
+ * Fix crash when the page has a math tag
+
+---
+
+0.13.3
+
+New features:
+
+ * Support for Rotten Tomatoes
+ * Option to use original video for Snapchat (enabled by default)
+ * Tumblr can now be used as a URL rule, meaning that it's no longer necessary to view images hosted by the host blog page (thanks to fireattack on discord for reporting)
+ * Support for shadow DOM
+ * Support for ~55 new websites (using ~25 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Gfycat, ModelMayhem, Onlyfans, Reddit, TikTok, Tumblr)
+ * Crashlog debug information now contains settings export (settings containing possibly sensitive data are automatically removed). Note that crashlogs are not automatically sent anywhere, it's up to you to send them.
+ * Loading times are significantly improved (thanks to fireattack on discord for reporting)
+
+Bugfixes:
+
+ * The options page will no longer crash when both "Requirements below disabled options" and "Use tabs" are enabled (#322, thanks to OmarNamis for reporting)
+ * The popup will no longer crash when a URL is blocked by tracking protection
+ * Websites using earlier prototype.js versions will no longer suffer from massive hangs in certain parts of the code
+ * Websites overriding the URL object are better supported
+ * The firefox extension will no longer crash when loading a popup with a page that overrides Blob objects (thanks to RaMpoFOX on discord for reporting)
+
+---
+
+0.13.2
+
+New features:
+
+ * Initial Spanish translation (thanks to BloodDragoneer on discord)
+ * Support for Tinder (thanks to BLiTZ on discord)
+ * Support for ~40 new websites (using ~30 new rules)
+
+Improvements:
+
+ * Various improvements/fixes to existing rules (including Cloudimage - thanks to BLiTZ on discord, Facebook, Flickr, Snapchat)
+
+Bugfixes:
+
+ * Redirection is now less likely to automatically redirect to an image that renders as text
+
+---
+
 0.13.1
 
 New features:
